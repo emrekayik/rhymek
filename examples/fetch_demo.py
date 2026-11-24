@@ -17,7 +17,7 @@ def main():
     print(f"Kayıtlı Sanatçılar: {artists}")
 
     # 2. İsterseniz kod içinden yeni bir sanatçı ekleyin:
-    # add_artist("Ezhel")
+    # add_artist("Saian")
 
     # 3. Belirli bir sanatçının en popüler 3 şarkısını çek:
     if artists:

@@ -53,10 +53,6 @@ Sanatçıları ister doğrudan `data/artists.json` dosyasını düzenleyerek, is
   {
     "id": 1421,
     "name": "Sagopa Kajmer"
-  },
-  {
-    "id": 195369,
-    "name": "Ezhel"
   }
 ]
 ```
