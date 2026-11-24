@@ -1,25 +1,34 @@
-import os
-from dotenv import load_dotenv
-import lyricsgenius
+"""
+rhymek: NLP Toolkit for Turkish Songs.
+Genius API entegrasyonu, sanatçı ID yönetimi ve şarkı sözü veri seti toplayıcı.
+"""
 
-# .env dosyasındaki değişkenleri yükle
-load_dotenv()
+from rhymek.client import get_genius_client
+from rhymek.artists import (
+    DEFAULT_ARTISTS_FILE,
+    load_artists,
+    save_artists,
+    add_artist,
+    remove_artist,
+    search_genius_artists,
+)
+from rhymek.songs import (
+    DEFAULT_LYRICS_DIR,
+    fetch_songs_for_artist,
+    fetch_all_artists_songs,
+)
+from rhymek.cli import main
 
-# API anahtarını güvenli bir şekilde al ve doğrula
-token = os.getenv("GENIUS_TOKEN")
-if not token:
-    raise ValueError("genius.com API token is missing! Please check .env file.")
-
-genius = lyricsgenius.Genius(token)
-
-
-def main() -> None:
-    print("Hello from rhymek!")
-    # Örnek kullanım:
-    song = genius.search_song("Bohemian Rhapsody", "Queen")
-    if song:
-        print(song.lyrics)
-
-
-if __name__ == "__main__":
-    main()
+__all__ = [
+    "get_genius_client",
+    "load_artists",
+    "save_artists",
+    "add_artist",
+    "remove_artist",
+    "search_genius_artists",
+    "fetch_songs_for_artist",
+    "fetch_all_artists_songs",
+    "DEFAULT_ARTISTS_FILE",
+    "DEFAULT_LYRICS_DIR",
+    "main",
+]
