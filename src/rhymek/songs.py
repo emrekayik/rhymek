@@ -1,20 +1,21 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 import lyricsgenius
+from rich.console import Console
 
 from rhymek.artists import load_artists
 from rhymek.client import get_genius_client
 
 DEFAULT_LYRICS_DIR = Path("data/lyrics")
+console = Console()
 
 
 def sanitize_filename(name: str, max_length: int = 100) -> str:
     """
     Dosya isimlerinde sorun yaratabilecek geçersiz karakterleri temizler.
     """
-    # Geçersiz dosya adı karakterlerini alt çizgi ile değiştir
     clean = re.sub(r'[\\/*?:"<>|]', "_", name)
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean[:max_length] if len(clean) > max_length else clean
@@ -56,6 +57,30 @@ def save_song_files(
             json.dump(song_data, f, ensure_ascii=False, indent=2)
 
 
+def get_downloaded_songs_for_artist(
+    artist_name: str,
+    output_dir: Union[str, Path] = DEFAULT_LYRICS_DIR,
+) -> List[Dict[str, Any]]:
+    """
+    Belirli bir sanatçının yerel diskte bulunan şarkı dosyalarını listeler.
+    """
+    folder = Path(output_dir) / sanitize_filename(artist_name)
+    if not folder.exists():
+        return []
+
+    songs = []
+    for json_file in folder.glob("*.json"):
+        if json_file.name == "_summary.json":
+            continue
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                songs.append(data)
+        except Exception:
+            continue
+    return songs
+
+
 def fetch_songs_for_artist(
     artist_id: int,
     artist_name: Optional[str] = None,
@@ -65,6 +90,7 @@ def fetch_songs_for_artist(
     include_features: bool = False,
     skip_existing: bool = True,
     genius: Optional[lyricsgenius.Genius] = None,
+    progress_callback: Optional[Callable[[str], None]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Verilen artist_id için şarkıları ve sözleri Genius API üzerinden çeker
@@ -72,6 +98,12 @@ def fetch_songs_for_artist(
     """
     client = genius or get_genius_client()
     output_base = Path(output_dir)
+
+    def log(msg: str) -> None:
+        if progress_callback:
+            progress_callback(msg)
+        else:
+            console.print(msg)
 
     # Sanatçı adı belirtilmemişse Genius API'den öğren
     if not artist_name:
@@ -82,11 +114,10 @@ def fetch_songs_for_artist(
     artist_folder = output_base / safe_artist_folder
     artist_folder.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n[rhymek] '{artist_name}' (ID: {artist_id}) için şarkılar çekiliyor...")
+    log(f"[bold cyan]🔍 '{artist_name}' (ID: {artist_id}) için şarkılar aranıyor...[/]")
 
     fetched_songs: List[Dict[str, Any]] = []
 
-    # lyricsgenius ile sanatçının şarkılarını ara
     artist_obj = client.search_artist(
         artist_name=artist_name,
         artist_id=artist_id,
@@ -96,7 +127,7 @@ def fetch_songs_for_artist(
     )
 
     if not artist_obj or not artist_obj.songs:
-        print(f"[rhymek] '{artist_name}' için şarkı bulunamadı.")
+        log(f"[yellow]⚠️ '{artist_name}' için şarkı bulunamadı.[/]")
         return []
 
     for song in artist_obj.songs:
@@ -104,7 +135,7 @@ def fetch_songs_for_artist(
         txt_file = artist_folder / f"{safe_title}.txt"
 
         if skip_existing and txt_file.exists():
-            print(f"  -> Zaten var (atlandı): {song.title}")
+            log(f"  [dim]⏭️ Zaten var (atlandı): {song.title}[/dim]")
             continue
 
         song_body = getattr(song, "_body", {}) or {}
@@ -130,7 +161,7 @@ def fetch_songs_for_artist(
 
         save_song_files(song_dict, artist_folder, save_txt=True, save_json=True)
         fetched_songs.append(song_dict)
-        print(f"  -> Kaydedildi: {song.title}")
+        log(f"  [green]✓ Kaydedildi:[/] [bold]{song.title}[/]")
 
     # Sanatçının tüm çekilen şarkı listesini özet JSON olarak da sakla
     summary_path = artist_folder / "_summary.json"
@@ -151,7 +182,7 @@ def fetch_songs_for_artist(
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(summary_data, f, ensure_ascii=False, indent=2)
 
-    print(f"[rhymek] Tamamlandı: {len(fetched_songs)} yeni şarkı kaydedildi ({artist_folder}).")
+    log(f"[bold green]✨ Tamamlandı:[/] {len(fetched_songs)} yeni şarkı kaydedildi ([blue]{artist_folder}[/]).")
     return fetched_songs
 
 
@@ -161,25 +192,32 @@ def fetch_all_artists_songs(
     sort: str = "popularity",
     output_dir: Union[str, Path] = DEFAULT_LYRICS_DIR,
     genius: Optional[lyricsgenius.Genius] = None,
+    progress_callback: Optional[Callable[[str], None]] = None,
 ) -> Dict[str, int]:
     """
     data/artists.json dosyasındaki tüm sanatçıları sırayla gezip şarkılarını çeker.
     """
+    def log(msg: str) -> None:
+        if progress_callback:
+            progress_callback(msg)
+        else:
+            console.print(msg)
+
     artists = load_artists(artists_file)
     if not artists:
-        print(f"[rhymek] '{artists_file}' içinde kayıtlı sanatçı bulunamadı!")
+        log(f"[yellow]⚠️ '{artists_file}' içinde kayıtlı sanatçı bulunamadı![/]")
         return {}
 
     client = genius or get_genius_client()
     stats: Dict[str, int] = {}
 
-    print(f"[rhymek] Toplam {len(artists)} sanatçı bulundu. Şarkılar çekiliyor...")
+    log(f"[bold magenta]🚀 Toplam {len(artists)} sanatçı bulundu. İndirme başlıyor...[/]")
 
     for artist in artists:
         a_id = artist.get("id")
         a_name = artist.get("name")
         if not a_id:
-            print(f"[rhymek] Uyarı: Sanatçı ID bulunamadı ({a_name}), atlanıyor.")
+            log(f"[yellow]⚠️ Sanatçı ID bulunamadı ({a_name}), atlanıyor.[/]")
             continue
 
         try:
@@ -190,10 +228,11 @@ def fetch_all_artists_songs(
                 sort=sort,
                 output_dir=output_dir,
                 genius=client,
+                progress_callback=progress_callback,
             )
             stats[a_name] = len(songs)
         except Exception as e:
-            print(f"[rhymek] '{a_name}' şarkıları çekilirken hata oluştu: {e}")
+            log(f"[red]❌ '{a_name}' için hata oluştu:[/] {e}")
             stats[a_name] = 0
 
     return stats

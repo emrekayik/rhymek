@@ -16,8 +16,10 @@ from rhymek.songs import (
     DEFAULT_LYRICS_DIR,
     fetch_songs_for_artist,
     fetch_all_artists_songs,
+    get_downloaded_songs_for_artist,
 )
-from rhymek.cli import main
+from rhymek.tui import launch_tui
+from rhymek.cli import main, app
 
 __all__ = [
     "get_genius_client",
@@ -28,7 +30,10 @@ __all__ = [
     "search_genius_artists",
     "fetch_songs_for_artist",
     "fetch_all_artists_songs",
+    "get_downloaded_songs_for_artist",
+    "launch_tui",
     "DEFAULT_ARTISTS_FILE",
     "DEFAULT_LYRICS_DIR",
     "main",
+    "app",
 ]

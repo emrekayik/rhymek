@@ -1,7 +1,7 @@
 [project]
 name = "rhymek"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Python library for Natural Language Processing (NLP) for Turkish Songs."
 readme = "README.md"
 authors = [
     { name = "emrekayik", email = "emrekayik1905@gmail.com" }
@@ -10,6 +10,10 @@ requires-python = ">=3.14"
 dependencies = [
     "dotenv>=0.9.9",
     "lyricsgenius>=3.18.1",
+    "questionary>=2.1.1",
+    "rich>=15.0.0",
+    "textual>=8.2.8",
+    "typer>=0.29.2",
 ]
 
 [project.scripts]

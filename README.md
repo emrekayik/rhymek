@@ -4,9 +4,11 @@ A Python library for Natural Language Processing (NLP) for Turkish Songs.
 
 ---
 
-## 🚀 Sanatçı ve Şarkı Sözü Yönetimi
+## 🚀 Sanatçı ve Şarkı Sözü Yönetimi (CLI & TUI)
 
 `rhymek`, sanatçı ID'lerini ve isimlerini merkezi bir dosyada toplayıp (`data/artists.json`), bu dosyadaki sanatçıların şarkı sözlerini Genius API üzerinden toplu veya tek tek çekmenizi sağlar.
+
+Proje hem **modern bir CLI** (Typer + Rich), hem **ok tuşlu interaktif wizard** (Questionary), hem de **tam ekran Terminal Arayüzü** (Textual TUI) sunar.
 
 ### 📁 Proje Yapısı
 
@@ -14,18 +16,20 @@ A Python library for Natural Language Processing (NLP) for Turkish Songs.
 rhymek/
 ├── data/
 │   ├── artists.json             # Sanatçı ID ve isim listesi
-│   └── lyrics/                  # İndirilen şarkı sözleri ve metaveriler
+│   └── lyrics/                  # İndirilen şarkı sözleri (Git tarafından yoksayılır)
 │       └── Ceza/
-│           ├── Holocaust.txt    # Şarkı sözü (başlık, albüm, tarih ile)
+│           ├── Holocaust.txt    # Başlık, albüm, tarih ve şarkı sözü
 │           ├── Holocaust.json   # Yapılandırılmış JSON metaverisi
 │           └── _summary.json    # Sanatçıya ait çekilen şarkıların özeti
 ├── src/rhymek/
 │   ├── client.py                # Genius API istemcisi
 │   ├── artists.py               # Sanatçı ekleme, silme, arama ve listeleme
-│   ├── songs.py                 # Şarkı sözü çekme ve kaydetme
-│   └── cli.py                   # Terminal arayüzü ve CLI komutları
+│   ├── songs.py                 # Şarkı sözü çekme, kaydetme ve önbellek kontrolü
+│   ├── tui.py                   # Textual tabanlı tam ekran TUI dashboard
+│   ├── cli.py                   # Typer, Rich ve Questionary ile zenginleştirilmiş CLI
+│   └── __init__.py              # Dışa aktarılan ana fonksiyonlar
 └── examples/
-    └── fetch_demo.py            # Kod üzerinden kullanım örneği
+    └── fetch_demo.py            # Python kodu üzerinden kullanım örneği
 ```
 
 ---
@@ -40,62 +44,69 @@ GENIUS_TOKEN="your_genius_client_access_token_here"
 
 ---
 
-### 2. Sanatçı Listesi (`data/artists.json`)
+### 2. Kullanım Modları
 
-Sanatçıları ister doğrudan `data/artists.json` dosyasını düzenleyerek, ister CLI veya Python fonksiyonları üzerinden ekleyebilirsiniz:
+#### 🖥️ Mod 1: Tam Ekran TUI Dashboard (Textual)
 
-```json
-[
-  {
-    "id": 11586,
-    "name": "Ceza"
-  },
-  {
-    "id": 1421,
-    "name": "Sagopa Kajmer"
-  }
-]
+Görsel ve modern bir terminal arayüzü ile sol tarafta sanatçılarınızı görebilir, yeni sanatçı ekleyip silebilir, sağ tarafta seçili sanatçının indirilmiş şarkılarını tablo halinde inceleyebilir ve canlı log takibiyle şarkıları tek tıkla indirebilirsiniz.
+
+```bash
+uv run rhymek tui
 ```
+
+- **Kısayollar:**
+  - `q`: Çıkış
+  - `r`: Sanatçı listesini ve tabloları yenile
+  - `f`: Seçili sanatçının şarkılarını indir
 
 ---
 
-### 3. Komut Satırı (CLI) Kullanımı
+#### 💬 Mod 2: İnteraktif Ok Tuşlu Menü (Questionary)
 
-#### 📋 Kayıtlı Sanatçıları ve Durumu Listele
+Hiçbir parametre vermeden çalıştırdığınızda kullanıcı dostu interaktif terminal menüsü açılır:
+
 ```bash
-uv run python -m rhymek list
+uv run rhymek
 ```
 
-#### ➕ Yeni Sanatçı Ekle
-Genius API'de otomatik arar, ID'sini çözer ve `data/artists.json` dosyasına ekler:
-```bash
-uv run python -m rhymek add "Şanışer"
-# veya ID biliyorsanız doğrudan:
-uv run python -m rhymek add "Ceza" --id 11586
-```
-
-#### 🎵 Şarkı Sözlerini Çek
-- **Tüm kayıtlı sanatçıların şarkılarını çekmek için:**
-  ```bash
-  uv run python -m rhymek fetch --all --max-songs 10
-  ```
-
-- **Sadece belirli bir sanatçının şarkılarını çekmek için:**
-  ```bash
-  uv run python -m rhymek fetch --artist "Ceza" --max-songs 5
-  ```
-
-#### 💬 Etkileşimli Menü
-Hiçbir parametre vermeden çalıştırırsanız interaktif terminal arayüzü açılır:
-```bash
-uv run python -m rhymek
-```
+- Ok tuşlarıyla menüler arasında geçiş yapabilirsiniz.
+- Şarkı indirme adımında **boşluk tuşuyla** birden fazla sanatçıyı kutucuklarla işaretleyip toplu indirebilirsiniz.
 
 ---
 
-### 4. Python Kodundan Kullanım
+#### ⚡ Mod 3: Doğrudan Komut Satırı (CLI - Typer & Rich)
 
-Kendi NLP veya analiz betiklerinizde doğrudan `rhymek` fonksiyonlarını kullanabilirsiniz:
+Hızlı işlemler ve otomasyon scriptleri için Rich destekli zengin komutlar:
+
+- **📋 Kayıtlı Sanatçıları Tablo Halinde Listele:**
+  ```bash
+  uv run rhymek list
+  ```
+
+- **➕ Yeni Sanatçı Ekle (Genius'ta otomatik arar ve ID'yi çözer):**
+  ```bash
+  uv run rhymek add "Ezhel"
+  # veya bilinen ID ile:
+  uv run rhymek add "Ceza" --id 11586
+  ```
+
+- **🗑️ Sanatçı Sil:**
+  ```bash
+  uv run rhymek remove "Ezhel"
+  ```
+
+- **⬇️ Şarkı Sözlerini Çek:**
+  ```bash
+  # Belirli bir sanatçının en popüler 5 şarkısını çek:
+  uv run rhymek fetch --artist "Ceza" --max-songs 5
+
+  # Listedeki tüm sanatçıların şarkılarını çek:
+  uv run rhymek fetch --all --max-songs 10
+  ```
+
+---
+
+### 3. Python Kodundan Kullanım
 
 ```python
 from rhymek import (
@@ -103,19 +114,18 @@ from rhymek import (
     add_artist,
     fetch_songs_for_artist,
     fetch_all_artists_songs,
+    launch_tui,
 )
 
 # 1. Kayıtlı sanatçıları oku
 artists = load_artists()
-for artist in artists:
-    print(artist["name"], artist["id"])
 
-# 2. Yeni sanatçı ekle (ID otomatik bulunur)
+# 2. Yeni sanatçı ekle (ID Genius API'den otomatik çekilir)
 add_artist("Defkhan")
 
-# 3. Belirli bir sanatçının en popüler 5 şarkısını çek
+# 3. Şarkıları çek
 fetch_songs_for_artist(artist_id=11586, artist_name="Ceza", max_songs=5)
 
-# 4. data/artists.json dosyasındaki tüm sanatçıların şarkılarını çek
-fetch_all_artists_songs(max_songs_per_artist=10)
+# 4. İsterseniz kod içinden TUI'yi başlatın
+# launch_tui()
 ```
