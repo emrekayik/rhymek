@@ -148,7 +148,7 @@ class RhymekApp(App):
                         yield Button("⬇️ Şarkıları Çek", id="btn_fetch", variant="primary")
                         yield Button("🌐 Tümünü Çek", id="btn_fetch_all", variant="success")
 
-                yield Label("🎵 İndirilen Şarkılar", classes="panel-title")
+                yield Label("🎵 JSONL Kayıtlı Şarkılar (data/songs.jsonl)", classes="panel-title")
                 yield DataTable(id="songs_table")
 
                 yield Label("📜 Canlı İşlem Günlüğü (Log)", classes="panel-title")

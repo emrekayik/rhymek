@@ -16,11 +16,11 @@ Proje hem **modern bir CLI** (Typer + Rich), hem **ok tuşlu interaktif wizard**
 rhymek/
 ├── data/
 │   ├── artists.json             # Sanatçı ID ve isim listesi
-│   └── lyrics/                  # İndirilen şarkı sözleri (Git tarafından yoksayılır)
+│   ├── songs.jsonl              # Tüm şarkıların toplu JSONL veri seti (Asla silinmez, eklenir)
+│   └── lyrics/                  # İsteğe bağlı .txt şarkı sözleri (Git tarafından yoksayılır)
 │       └── Ceza/
 │           ├── Holocaust.txt    # Başlık, albüm, tarih ve şarkı sözü
-│           ├── Holocaust.json   # Yapılandırılmış JSON metaverisi
-│           └── _summary.json    # Sanatçıya ait çekilen şarkıların özeti
+│           └── Suspus.txt
 ├── src/rhymek/
 │   ├── client.py                # Genius API istemcisi
 │   ├── artists.py               # Sanatçı ekleme, silme, arama ve listeleme

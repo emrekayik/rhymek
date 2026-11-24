@@ -1,6 +1,6 @@
 """
 Örnek kullanım:
-data/artists.json dosyasından sanatçıları okuyup şarkılarını çeker.
+data/artists.json dosyasından sanatçıları okuyup şarkılarını data/songs.jsonl'e ekler.
 """
 
 from rhymek import (
@@ -8,6 +8,7 @@ from rhymek import (
     add_artist,
     fetch_songs_for_artist,
     fetch_all_artists_songs,
+    load_songs_from_jsonl,
 )
 
 
@@ -19,10 +20,10 @@ def main():
     # 2. İsterseniz kod içinden yeni bir sanatçı ekleyin:
     # add_artist("Saian")
 
-    # 3. Belirli bir sanatçının en popüler 3 şarkısını çek:
+    # 3. Belirli bir sanatçının en popüler 2 şarkısını çek (data/songs.jsonl'e eklenir):
     if artists:
         first_artist = artists[0]
-        print(f"\n{first_artist['name']} için 2 şarkı çekiliyor...")
+        print(f"\n{first_artist['name']} için şarkılar çekiliyor...")
         fetch_songs_for_artist(
             artist_id=first_artist["id"],
             artist_name=first_artist["name"],
@@ -30,8 +31,11 @@ def main():
             sort="popularity",
         )
 
-    # 4. Veya listedeki tüm sanatçıların şarkılarını çekmek için:
-    # fetch_all_artists_songs(max_songs_per_artist=5)
+    # 4. JSONL dosyasındaki kayıtlı tüm şarkıları oku:
+    all_songs = load_songs_from_jsonl()
+    print(f"\nToplam JSONL şarkı sayısı: {len(all_songs)}")
+    for s in all_songs:
+        print(f"  • [{s.get('artist')}] {s.get('title')} ({s.get('release_date')})")
 
 
 if __name__ == "__main__":

@@ -14,9 +14,12 @@ from rhymek.artists import (
 )
 from rhymek.songs import (
     DEFAULT_LYRICS_DIR,
+    DEFAULT_SONGS_JSONL,
     fetch_songs_for_artist,
     fetch_all_artists_songs,
     get_downloaded_songs_for_artist,
+    load_songs_from_jsonl,
+    get_saved_song_ids,
 )
 from rhymek.tui import launch_tui
 from rhymek.cli import main, app
@@ -34,6 +37,9 @@ __all__ = [
     "launch_tui",
     "DEFAULT_ARTISTS_FILE",
     "DEFAULT_LYRICS_DIR",
+    "DEFAULT_SONGS_JSONL",
+    "load_songs_from_jsonl",
+    "get_saved_song_ids",
     "main",
     "app",
 ]

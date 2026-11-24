@@ -54,17 +54,18 @@ def print_artists_table() -> None:
     table.add_column("#", style="dim", width=4)
     table.add_column("Genius ID", style="bold green", width=12)
     table.add_column("Sanatçı Adı", style="bold white", min_width=20)
-    table.add_column("İndirilen Şarkı", justify="center", style="bold yellow", width=16)
-    table.add_column("Klasör", style="dim blue")
+    table.add_column("JSONL Kayıtlı Şarkı", justify="center", style="bold yellow", width=22)
 
+    total_songs = 0
     for idx, a in enumerate(artists, 1):
         name = a.get("name", "")
         a_id = str(a.get("id", ""))
         downloaded = len(get_downloaded_songs_for_artist(name))
+        total_songs += downloaded
         count_display = f"{downloaded} adet" if downloaded > 0 else "[dim]Henüz yok[/dim]"
-        folder_path = f"data/lyrics/{name}"
-        table.add_row(str(idx), a_id, name, count_display, folder_path)
+        table.add_row(str(idx), a_id, name, count_display)
 
+    table.caption = f"[dim]Toplam [bold cyan]{total_songs}[/bold cyan] şarkı [blue]data/songs.jsonl[/blue] dosyasında kayıtlı.[/dim]"
     console.print(table)
 
 
