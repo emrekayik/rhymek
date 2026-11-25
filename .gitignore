@@ -12,6 +12,8 @@ wheels/
 
 data/lyrics/
 data/*.jsonl
+data/fetch_state.json
 nltk_data/
 
 
+.agents

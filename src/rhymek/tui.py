@@ -1,10 +1,9 @@
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Horizontal, Vertical
 from textual.widgets import (
     Button,
     DataTable,
@@ -14,19 +13,16 @@ from textual.widgets import (
     Label,
     OptionList,
     RichLog,
-    Static,
 )
 from textual.widgets.option_list import Option
 
 from rhymek.artists import (
-    DEFAULT_ARTISTS_FILE,
     add_artist,
     load_artists,
     remove_artist,
     search_genius_artists,
 )
 from rhymek.songs import (
-    DEFAULT_LYRICS_DIR,
     fetch_all_artists_songs,
     fetch_songs_for_artist,
     get_downloaded_songs_for_artist,

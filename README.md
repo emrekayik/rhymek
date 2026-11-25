@@ -17,6 +17,7 @@ rhymek/
 ├── data/
 │   ├── artists.json             # Sanatçı ID ve isim listesi
 │   ├── songs.jsonl              # Tüm şarkıların toplu JSONL veri seti (Asla silinmez, eklenir)
+│   ├── fetch_state.json         # Çekim durumu: taranan sanatçılar ve başarısız şarkılar
 │   └── lyrics/                  # İsteğe bağlı .txt şarkı sözleri (Git tarafından yoksayılır)
 │       └── Ceza/
 │           ├── Holocaust.txt    # Başlık, albüm, tarih ve şarkı sözü
@@ -102,7 +103,16 @@ Hızlı işlemler ve otomasyon scriptleri için Rich destekli zengin komutlar:
 
   # Listedeki tüm sanatçıların şarkılarını çek:
   uv run rhymek fetch --all --max-songs 10
+
+  # Daha önce çekilenleri atlamadan yeniden tara:
+  uv run rhymek fetch --all --max-songs 10 --force
   ```
+
+  > **Tekrarlı çekim koruması:** Zaten `data/songs.jsonl` içinde olan şarkıların sözleri
+  > yeniden indirilmez. Aynı parametrelerle tamamen taranmış sanatçılar hiç API'ye
+  > gitmeden atlanır; sözü bulunamayan şarkılar `data/fetch_state.json` içine yazılır ve
+  > tekrar denenmez. Yeni çıkan şarkıları veya başarısız olanları yeniden denemek için
+  > `--force` kullanın.
 
 ---
 
@@ -129,3 +139,49 @@ fetch_songs_for_artist(artist_id=11586, artist_name="Ceza", max_songs=5)
 # 4. İsterseniz kod içinden TUI'yi başlatın
 # launch_tui()
 ```
+
+---
+
+### 4. NLP Altyapısı
+
+`rhymek.nlp` paketi, Türkçe şarkı sözleri üzerinde çalışacak analizler için ortak
+altyapıyı sağlar. Henüz dilbilimsel model içermez; kafiye ve heceleme modülleri
+arayüz sözleşmesi olarak bırakılmıştır.
+
+```python
+from rhymek.nlp import Pipeline, StatsAnalyzer, load_corpus, summarize_corpus
+
+# JSONL korpusunu belge nesnelerine dönüştür
+docs = load_corpus(artist="Ceza", limit=50, min_tokens=20)
+
+# Tek şarkıda analiz hattı çalıştır
+result = Pipeline([StatsAnalyzer(top_n=5)]).run(docs[0])
+print(result.get("stats")["tokens"])
+
+# Korpus geneli özet
+print(summarize_corpus(docs)["unique_tokens"])
+```
+
+| Modül | Durum | İçerik |
+| --- | --- | --- |
+| `rhymek.nlp.types` | ✅ | `Token`, `Line`, `Stanza`, `SongDocument`, `AnalysisResult` |
+| `rhymek.nlp.text` | ✅ | Türkçe küçük harf, normalizasyon, tokenize, kıta/satır ayrıştırma |
+| `rhymek.nlp.corpus` | ✅ | JSONL yükleme, sanatçı/token filtresi, tekilleştirme |
+| `rhymek.nlp.analyzers` | ✅ | `Analyzer` arayüzü, `StatsAnalyzer`, `summarize_corpus` |
+| `rhymek.nlp.pipeline` | ✅ | Sıralı analiz hattı (`Pipeline`) |
+| `rhymek.nlp.rhyme` | 🚧 | Satır sonu adayları hazır; `rhyme_key`/`rhyme_groups` iskelet |
+| `rhymek.nlp.syllables` | 🚧 | Ünlü sayımı hazır; `syllabify`/`count_syllables` iskelet |
+
+CLI üzerinden hızlı korpus özeti:
+
+```bash
+uv run rhymek nlp stats --limit 50
+uv run rhymek nlp stats --artist "Ceza" --top 20 --json
+```
+
+Testler:
+
+```bash
+uv run python -m unittest discover -s tests -v
+```
+

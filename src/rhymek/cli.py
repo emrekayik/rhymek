@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from typing import Optional
 
 import questionary
@@ -9,14 +7,12 @@ from rich.table import Table
 import typer
 
 from rhymek.artists import (
-    DEFAULT_ARTISTS_FILE,
     add_artist,
     load_artists,
     remove_artist,
     search_genius_artists,
 )
 from rhymek.songs import (
-    DEFAULT_LYRICS_DIR,
     fetch_all_artists_songs,
     fetch_songs_for_artist,
     get_downloaded_songs_for_artist,
@@ -29,6 +25,13 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 console = Console()
+
+nlp_app = typer.Typer(
+    name="nlp",
+    help="🧠 Doğal dil işleme altyapısı komutları.",
+    no_args_is_help=True,
+)
+app.add_typer(nlp_app, name="nlp")
 
 
 def print_artists_table() -> None:
@@ -201,6 +204,69 @@ def cmd_list():
     print_artists_table()
 
 
+@nlp_app.command("stats", help="Korpus/şarkı istatistiklerini gösterir.")
+def cmd_nlp_stats(
+    artist: Optional[str] = typer.Option(
+        None, "--artist", "-a", help="Sanatçı adına göre filtrele"
+    ),
+    limit: Optional[int] = typer.Option(
+        None, "--limit", "-l", help="En fazla kaç şarkı işlensin"
+    ),
+    top: int = typer.Option(
+        10, "--top", "-t", help="En sık kaç token gösterilsin"
+    ),
+    as_json: bool = typer.Option(False, "--json", help="JSON çıktı ver"),
+):
+    """Korpus yükleme + istatistik pipeline'ı için örnek CLI girişi."""
+    from rhymek.nlp import load_corpus, summarize_corpus
+
+    documents = load_corpus(artist=artist, limit=limit)
+    if not documents:
+        console.print("[yellow]⚠️ Kriterlere uyan şarkı bulunamadı.[/]")
+        raise typer.Exit(code=1)
+
+    summary = summarize_corpus(documents, top_n=top)
+
+    if as_json:
+        console.print_json(data=summary)
+        return
+
+    table = Table(
+        title="🧠 [bold cyan]NLP Korpus İstatistikleri[/bold cyan]",
+        header_style="bold magenta",
+        border_style="cyan",
+        show_header=False,
+    )
+    table.add_column("Metrik", style="bold white")
+    table.add_column("Değer", justify="right", style="bold yellow")
+
+    labels = [
+        ("songs", "Şarkı"),
+        ("stanzas", "Kıta"),
+        ("lines", "Satır"),
+        ("section_headers", "Bölüm başlığı"),
+        ("tokens", "Token"),
+        ("unique_tokens", "Benzersiz token"),
+        ("type_token_ratio", "Type/token oranı"),
+    ]
+    for key, label in labels:
+        table.add_row(label, str(summary[key]))
+    console.print(table)
+
+    if summary["top_tokens"]:
+        top_table = Table(
+            title=f"🔝 [bold cyan]En Sık {top} Token[/bold cyan]",
+            header_style="bold magenta",
+            border_style="cyan",
+        )
+        top_table.add_column("#", style="dim", width=4)
+        top_table.add_column("Token", style="bold white")
+        top_table.add_column("Frekans", justify="right", style="bold yellow")
+        for rank, item in enumerate(summary["top_tokens"], 1):
+            top_table.add_row(str(rank), item["token"], str(item["count"]))
+        console.print(top_table)
+
+
 @app.command("add", help="Genius üzerinden sanatçı arayıp data/artists.json dosyasına ekler.")
 def cmd_add(
     name: str = typer.Argument(..., help="Sanatçı adı"),
@@ -232,6 +298,12 @@ def cmd_fetch(
     all_artists: bool = typer.Option(False, "--all", help="Listedeki tüm sanatçıları çeker"),
     max_songs: int = typer.Option(10, "--max-songs", "-m", help="Sanatçı başına maksimum şarkı sayısı"),
     sort: str = typer.Option("popularity", "--sort", "-s", help="Sıralama ölçütü (popularity veya title)"),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Daha önce çekilen sanatçıları atlama; yeniden tara ve başarısız şarkıları tekrar dene.",
+    ),
 ):
     if artist:
         artists = load_artists()
@@ -247,12 +319,14 @@ def cmd_fetch(
                 artist_name=found["name"],
                 max_songs=max_songs,
                 sort=sort,
+                force=force,
             )
         elif artist.isdigit():
             fetch_songs_for_artist(
                 artist_id=int(artist),
                 max_songs=max_songs,
                 sort=sort,
+                force=force,
             )
         else:
             console.print(f"[red]❌ '{artist}' listede bulunamadı.[/] Önce 'rhymek add \"{artist}\"' ile ekleyin.")
@@ -262,6 +336,7 @@ def cmd_fetch(
         fetch_all_artists_songs(
             max_songs_per_artist=max_songs,
             sort=sort,
+            force=force,
         )
 
 
