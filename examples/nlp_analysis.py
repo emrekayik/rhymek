@@ -32,6 +32,7 @@ from rich.console import Console
 from rich.table import Table
 
 from rhymek.nlp import (
+    AnalysisResult,
     Analyzer,
     Pipeline,
     SongDocument,
@@ -129,7 +130,7 @@ def parse_args() -> argparse.Namespace:
 
 def build_report(
     documents: List[SongDocument],
-    results: List[Any],
+    results: List[AnalysisResult],
     *,
     top_n: int,
 ) -> Dict[str, Any]:

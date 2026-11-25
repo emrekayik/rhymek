@@ -26,11 +26,20 @@ rhymek/
 │   ├── client.py                # Genius API istemcisi
 │   ├── artists.py               # Sanatçı ekleme, silme, arama ve listeleme
 │   ├── songs.py                 # Şarkı sözü çekme, kaydetme ve önbellek kontrolü
+│   ├── nlp/
+│   │   ├── types.py             # Token, satır, kıta ve belge modelleri
+│   │   ├── text.py              # Türkçe normalizasyon ve tokenizasyon
+│   │   ├── corpus.py            # JSONL → SongDocument yükleyicisi
+│   │   ├── pipeline.py          # Sıralı analiz hattı
+│   │   ├── rhyme.py             # Kafiye altyapısı (iskelet)
+│   │   ├── syllables.py         # Heceleme altyapısı (iskelet)
+│   │   └── analyzers/           # Analyzer arayüzü ve istatistik analizi
 │   ├── tui.py                   # Textual tabanlı tam ekran TUI dashboard
 │   ├── cli.py                   # Typer, Rich ve Questionary ile zenginleştirilmiş CLI
 │   └── __init__.py              # Dışa aktarılan ana fonksiyonlar
 └── examples/
-    └── fetch_demo.py            # Python kodu üzerinden kullanım örneği
+    ├── fetch_demo.py            # Python kodu üzerinden veri çekme örneği
+    └── nlp_analysis.py          # NLP korpus analizi ve özel analizör örneği
 ```
 
 ---
@@ -177,6 +186,19 @@ CLI üzerinden hızlı korpus özeti:
 ```bash
 uv run rhymek nlp stats --limit 50
 uv run rhymek nlp stats --artist "Ceza" --top 20 --json
+```
+
+Örnek analiz betiği (`StatsAnalyzer` + özel `LineEndingAnalyzer` + pipeline):
+
+```bash
+# İlk 10 şarkıyı tablo halinde analiz et
+uv run python examples/nlp_analysis.py
+
+# Sanatçı filtresi ve JSON çıktısı
+uv run python examples/nlp_analysis.py --artist "Ceza" --limit 20 --json
+
+# Şarkı başına sonuçları JSONL olarak dışa aktar
+uv run python examples/nlp_analysis.py --all --output nlp_results.jsonl
 ```
 
 Testler:
