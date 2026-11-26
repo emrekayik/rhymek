@@ -7,7 +7,8 @@ analiz pipeline'ını sağlar.
 
 Kapsam bilinçli olarak "altyapı" ile sınırlıdır:
 - Çalışan: JSONL korpus yükleme, normalize etme, tokenize etme, kıta/satır
-  ayrıştırma, istatistik analizi, pipeline
+  ayrıştırma, istatistik analizi, pipeline, transformer tabanlı gömme ve
+  anlamsal arama
 - İskelet: kafiye anahtarı ve Türkçe heceleme (``NotImplementedError``)
 """
 
@@ -17,6 +18,29 @@ from rhymek.nlp.corpus import (
     document_from_record,
     iter_corpus,
     load_corpus,
+)
+from rhymek.nlp.embeddings import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_EMBEDDINGS_DIR,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_MODEL,
+    DEFAULT_STRIDE,
+    EmbeddingError,
+    EmbeddingIndex,
+    IndexBuildResult,
+    MLDependencyError,
+    ProgressCallback,
+    SearchHit,
+    TextEmbedder,
+    TransformerEmbedder,
+    build_index,
+    chunk_token_ids,
+    document_text,
+    find_snippet,
+    index_path_for_model,
+    semantic_search,
+    similar_songs,
+    text_hash,
 )
 from rhymek.nlp.pipeline import Pipeline, default_pipeline
 from rhymek.nlp.rhyme import LineEnding, line_endings, rhyme_groups, rhyme_key
@@ -77,4 +101,26 @@ __all__ = [
     "count_vowels",
     "is_vowel",
     "syllabify",
+    # embeddings / semantic search
+    "DEFAULT_BATCH_SIZE",
+    "DEFAULT_EMBEDDINGS_DIR",
+    "DEFAULT_MAX_TOKENS",
+    "DEFAULT_MODEL",
+    "DEFAULT_STRIDE",
+    "EmbeddingError",
+    "EmbeddingIndex",
+    "IndexBuildResult",
+    "MLDependencyError",
+    "ProgressCallback",
+    "SearchHit",
+    "TextEmbedder",
+    "TransformerEmbedder",
+    "build_index",
+    "chunk_token_ids",
+    "document_text",
+    "find_snippet",
+    "index_path_for_model",
+    "semantic_search",
+    "similar_songs",
+    "text_hash",
 ]

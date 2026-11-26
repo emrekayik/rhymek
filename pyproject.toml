@@ -22,6 +22,12 @@ dependencies = [
 [project.scripts]
 rhymek = "rhymek:main"
 
+[project.optional-dependencies]
+ml = [
+    "torch>=2.15.0",
+    "transformers>=5.24.1",
+]
+
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14.0"]
 build-backend = "uv_build"

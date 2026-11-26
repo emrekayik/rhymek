@@ -13,6 +13,7 @@ wheels/
 data/lyrics/
 data/*.jsonl
 data/fetch_state.json
+data/embeddings/
 nltk_data/
 
 

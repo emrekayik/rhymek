@@ -18,6 +18,7 @@ rhymek/
 │   ├── artists.json             # Sanatçı ID ve isim listesi
 │   ├── songs.jsonl              # Tüm şarkıların toplu JSONL veri seti (Asla silinmez, eklenir)
 │   ├── fetch_state.json         # Çekim durumu: taranan sanatçılar ve başarısız şarkılar
+│   ├── embeddings/              # Transformer gömme indeksleri (Git tarafından yoksayılır)
 │   └── lyrics/                  # İsteğe bağlı .txt şarkı sözleri (Git tarafından yoksayılır)
 │       └── Ceza/
 │           ├── Holocaust.txt    # Başlık, albüm, tarih ve şarkı sözü
@@ -30,6 +31,7 @@ rhymek/
 │   │   ├── types.py             # Token, satır, kıta ve belge modelleri
 │   │   ├── text.py              # Türkçe normalizasyon ve tokenizasyon
 │   │   ├── corpus.py            # JSONL → SongDocument yükleyicisi
+│   │   ├── embeddings.py        # Transformer gömmeleri ve anlamsal arama
 │   │   ├── pipeline.py          # Sıralı analiz hattı
 │   │   ├── rhyme.py             # Kafiye altyapısı (iskelet)
 │   │   ├── syllables.py         # Heceleme altyapısı (iskelet)
@@ -153,9 +155,9 @@ fetch_songs_for_artist(artist_id=11586, artist_name="Ceza", max_songs=5)
 
 ### 4. NLP Altyapısı
 
-`rhymek.nlp` paketi, Türkçe şarkı sözleri üzerinde çalışacak analizler için ortak
-altyapıyı sağlar. Henüz dilbilimsel model içermez; kafiye ve heceleme modülleri
-arayüz sözleşmesi olarak bırakılmıştır.
+`rhymek.nlp` paketi; kural tabanlı metin işleme, korpus yükleme, analiz
+pipeline'ı ve Hugging Face `transformers` + `torch` tabanlı anlamsal arama
+altyapısını sağlar. Kafiye ve heceleme modülleri hâlâ arayüz sözleşmesidir.
 
 ```python
 from rhymek.nlp import Pipeline, StatsAnalyzer, load_corpus, summarize_corpus
@@ -178,6 +180,7 @@ print(summarize_corpus(docs)["unique_tokens"])
 | `rhymek.nlp.corpus` | ✅ | JSONL yükleme, sanatçı/token filtresi, tekilleştirme |
 | `rhymek.nlp.analyzers` | ✅ | `Analyzer` arayüzü, `StatsAnalyzer`, `summarize_corpus` |
 | `rhymek.nlp.pipeline` | ✅ | Sıralı analiz hattı (`Pipeline`) |
+| `rhymek.nlp.embeddings` | ✅ | Transformer gömmeleri, kosinüs araması, artımlı önbellek |
 | `rhymek.nlp.rhyme` | 🚧 | Satır sonu adayları hazır; `rhyme_key`/`rhyme_groups` iskelet |
 | `rhymek.nlp.syllables` | 🚧 | Ünlü sayımı hazır; `syllabify`/`count_syllables` iskelet |
 
@@ -187,6 +190,67 @@ CLI üzerinden hızlı korpus özeti:
 uv run rhymek nlp stats --limit 50
 uv run rhymek nlp stats --artist "Ceza" --top 20 --json
 ```
+
+#### Transformer tabanlı anlamsal arama
+
+Torch ve transformers isteğe bağlı `ml` ekstrasındadır; temel kurulum hafif kalır:
+
+```bash
+uv sync --extra ml
+```
+
+İlk `embed` çalıştırmasında model (~470 MB) indirilir; sonraki çalıştırmalarda
+yalnızca yeni veya sözleri değişmiş şarkılar hesaplanır.
+
+```bash
+# Tüm korpus için gömme indeksi
+uv run rhymek nlp embed
+
+# Hızlı deneme / sanatçı filtresi
+uv run rhymek nlp embed --artist "Ceza" --limit 20
+
+# Doğal dil ile anlamsal arama
+uv run rhymek nlp search "yalnızlık ve sokak" --top 5
+uv run rhymek nlp search "aşk" --artist "Ceza" --json
+
+# Benzer şarkılar (kayıtlı vektörlerden, model yüklemez)
+uv run rhymek nlp similar "Suspus" --top 5
+uv run rhymek nlp similar --id 1913073
+```
+
+- Varsayılan model: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`.
+- `--device auto` macOS'ta MPS'i, Linux'ta CUDA'yı, yoksa CPU'yu seçer.
+- Vektörler `data/embeddings/<model>.npz` altında tutulur (git'e girmez).
+- `--force` seçili şarkıları yeniden hesaplar; `--artist`/`--limit` ile alt küme seçilebilir.
+- Uzun şarkılar 256 token'lık örtüşen parçalara bölünür; parça vektörlerinin ortalaması alınır.
+
+Python API:
+
+```python
+from rhymek.nlp import (
+    TransformerEmbedder,
+    build_index,
+    load_corpus,
+    semantic_search,
+)
+
+docs = load_corpus(limit=100)
+docs_by_id = {doc.song_id: doc for doc in docs}
+embedder = TransformerEmbedder()  # ilk kullanımda modeli yükler
+built = build_index(docs, embedder=embedder)
+
+hits = semantic_search(
+    built.index,
+    "yalnızlık ve sokak",
+    embedder,
+    top_k=5,
+    documents_by_id=docs_by_id,
+)
+for hit in hits:
+    print(f"{hit.score:.3f}  {hit.title} — {hit.artist}")
+```
+
+Modeli bir kez yükleyip farklı sorgular için yeniden kullanabilirsiniz.
 
 Örnek analiz betiği (`StatsAnalyzer` + özel `LineEndingAnalyzer` + pipeline):
 
