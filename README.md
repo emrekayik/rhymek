@@ -33,8 +33,8 @@ rhymek/
 │   │   ├── corpus.py            # JSONL → SongDocument yükleyicisi
 │   │   ├── embeddings.py        # Transformer gömmeleri ve anlamsal arama
 │   │   ├── pipeline.py          # Sıralı analiz hattı
-│   │   ├── rhyme.py             # Kafiye altyapısı (iskelet)
-│   │   ├── syllables.py         # Heceleme altyapısı (iskelet)
+│   │   ├── rhyme.py             # Yazıma dayalı kafiye adayları
+│   │   ├── syllables.py         # Türkçe heceleme
 │   │   └── analyzers/           # Analyzer arayüzü ve istatistik analizi
 │   ├── tui.py                   # Textual tabanlı tam ekran TUI dashboard
 │   ├── cli.py                   # Typer, Rich ve Questionary ile zenginleştirilmiş CLI
@@ -55,6 +55,8 @@ GENIUS_TOKEN="your_genius_client_access_token_here"
 ```
 
 ---
+
+Veri dosyaları kaynak koddan çalıştırırken proje kökündeki `data/` dizininde aranır. Kurulu paket için varsayılan konum çalışma dizinindeki `data/` dizinidir. Konumu değiştirmek için `RHYMEK_DATA_DIR` ortam değişkenini kullanın.
 
 ### 2. Kullanım Modları
 
@@ -157,7 +159,7 @@ fetch_songs_for_artist(artist_id=11586, artist_name="Ceza", max_songs=5)
 
 `rhymek.nlp` paketi; kural tabanlı metin işleme, korpus yükleme, analiz
 pipeline'ı ve Hugging Face `transformers` + `torch` tabanlı anlamsal arama
-altyapısını sağlar. Kafiye ve heceleme modülleri hâlâ arayüz sözleşmesidir.
+altyapısını sağlar. Türkçe heceleme ve yazıma dayalı satır sonu kafiye adayları da üretilebilir.
 
 ```python
 from rhymek.nlp import Pipeline, StatsAnalyzer, load_corpus, summarize_corpus
@@ -181,8 +183,8 @@ print(summarize_corpus(docs)["unique_tokens"])
 | `rhymek.nlp.analyzers` | ✅ | `Analyzer` arayüzü, `StatsAnalyzer`, `summarize_corpus` |
 | `rhymek.nlp.pipeline` | ✅ | Sıralı analiz hattı (`Pipeline`) |
 | `rhymek.nlp.embeddings` | ✅ | Transformer gömmeleri, kosinüs araması, artımlı önbellek |
-| `rhymek.nlp.rhyme` | 🚧 | Satır sonu adayları hazır; `rhyme_key`/`rhyme_groups` iskelet |
-| `rhymek.nlp.syllables` | 🚧 | Ünlü sayımı hazır; `syllabify`/`count_syllables` iskelet |
+| `rhymek.nlp.rhyme` | ✅ | Satır sonlarını ortak yazılı soneklere göre gruplar |
+| `rhymek.nlp.syllables` | ✅ | Yazıma göre hece ayırma ve sayma |
 
 CLI üzerinden hızlı korpus özeti:
 

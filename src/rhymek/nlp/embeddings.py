@@ -47,11 +47,12 @@ from typing import (
     Union,
 )
 
+from rhymek.artists import DATA_DIR
 from rhymek.nlp.text import tokenize
 from rhymek.nlp.types import SongDocument
 
 DEFAULT_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-DEFAULT_EMBEDDINGS_DIR = Path("data/embeddings")
+DEFAULT_EMBEDDINGS_DIR = DATA_DIR / "embeddings"
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_MAX_TOKENS = 256
 DEFAULT_STRIDE = 64

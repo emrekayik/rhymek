@@ -19,6 +19,7 @@ from rhymek.songs import (
     fetch_all_artists_songs,
     fetch_songs_for_artist,
     get_downloaded_songs_for_artist,
+    load_songs_from_jsonl,
 )
 from rhymek.tui import launch_tui
 
@@ -62,11 +63,12 @@ def print_artists_table() -> None:
     table.add_column("Sanatçı Adı", style="bold white", min_width=20)
     table.add_column("JSONL Kayıtlı Şarkı", justify="center", style="bold yellow", width=22)
 
+    songs = load_songs_from_jsonl()
     total_songs = 0
     for idx, a in enumerate(artists, 1):
         name = a.get("name", "")
         a_id = str(a.get("id", ""))
-        downloaded = len(get_downloaded_songs_for_artist(name))
+        downloaded = len(get_downloaded_songs_for_artist(name, cached_songs=songs))
         total_songs += downloaded
         count_display = f"{downloaded} adet" if downloaded > 0 else "[dim]Henüz yok[/dim]"
         table.add_row(str(idx), a_id, name, count_display)

@@ -1,11 +1,19 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import lyricsgenius
 
 from rhymek.client import get_genius_client
 
-DEFAULT_ARTISTS_FILE = Path("data/artists.json")
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_DATA_DIR = (
+    _PROJECT_ROOT / "data"
+    if (_PROJECT_ROOT / "pyproject.toml").is_file()
+    else Path.cwd() / "data"
+)
+DATA_DIR = Path(os.environ.get("RHYMEK_DATA_DIR") or _DEFAULT_DATA_DIR).expanduser().resolve()
+DEFAULT_ARTISTS_FILE = DATA_DIR / "artists.json"
 
 
 def load_artists(filepath: Union[str, Path] = DEFAULT_ARTISTS_FILE) -> List[Dict[str, Any]]:

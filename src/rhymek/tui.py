@@ -26,6 +26,7 @@ from rhymek.songs import (
     fetch_all_artists_songs,
     fetch_songs_for_artist,
     get_downloaded_songs_for_artist,
+    load_songs_from_jsonl,
 )
 
 
@@ -169,14 +170,18 @@ class RhymekApp(App):
         opt_list.clear_options()
 
         if not self.artists:
+            self.selected_artist = None
+            self.query_one("#artist_header", Label).update("Lütfen bir sanatçı seçin")
+            self.query_one("#songs_table", DataTable).clear()
             opt_list.add_option(Option("Henüz sanatçı yok", id="none", disabled=True))
             return
 
+        songs = load_songs_from_jsonl()
         for idx, artist in enumerate(self.artists):
             name = artist.get("name", "Bilinmeyen")
             a_id = artist.get("id", "?")
             # İndirilen şarkı sayısını hesapla
-            count = len(get_downloaded_songs_for_artist(name))
+            count = len(get_downloaded_songs_for_artist(name, cached_songs=songs))
             badge = f"({count} şarkı)" if count > 0 else "(yok)"
             opt_list.add_option(Option(f"{name} {badge} [ID: {a_id}]", id=str(idx)))
 

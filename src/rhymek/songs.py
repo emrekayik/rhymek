@@ -7,12 +7,12 @@ from typing import Any, Callable, Dict, List, Optional, Set, Union
 import lyricsgenius
 from rich.console import Console
 
-from rhymek.artists import load_artists
+from rhymek.artists import DATA_DIR, load_artists
 from rhymek.client import get_genius_client
 
-DEFAULT_LYRICS_DIR = Path("data/lyrics")
-DEFAULT_SONGS_JSONL = Path("data/songs.jsonl")
-DEFAULT_FETCH_STATE = Path("data/fetch_state.json")
+DEFAULT_LYRICS_DIR = DATA_DIR / "lyrics"
+DEFAULT_SONGS_JSONL = DATA_DIR / "songs.jsonl"
+DEFAULT_FETCH_STATE = DATA_DIR / "fetch_state.json"
 FETCH_STATE_VERSION = 1
 DEFAULT_EXCLUDED_TERMS = (
     "tracklist",
@@ -374,6 +374,8 @@ def get_downloaded_songs_for_artist(
     artist_name_or_id: Union[str, int],
     jsonl_file: Union[str, Path] = DEFAULT_SONGS_JSONL,
     output_dir: Union[str, Path] = DEFAULT_LYRICS_DIR,
+    *,
+    cached_songs: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Belirli bir sanatçının yerel diskte (önce data/songs.jsonl, yoksa data/lyrics)
@@ -382,7 +384,9 @@ def get_downloaded_songs_for_artist(
     target = str(artist_name_or_id).lower()
 
     # 1. Önce songs.jsonl dosyasından çek
-    all_jsonl_songs = load_songs_from_jsonl(jsonl_file)
+    all_jsonl_songs = (
+        load_songs_from_jsonl(jsonl_file) if cached_songs is None else cached_songs
+    )
     if all_jsonl_songs:
         matched = [
             s for s in all_jsonl_songs
