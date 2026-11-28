@@ -223,6 +223,7 @@ uv run rhymek nlp similar --id 1913073
 - Vektörler `data/embeddings/<model>.npz` altında tutulur (git'e girmez).
 - `--force` seçili şarkıları yeniden hesaplar; `--artist`/`--limit` ile alt küme seçilebilir.
 - Uzun şarkılar 256 token'lık örtüşen parçalara bölünür; parça vektörlerinin ortalaması alınır.
+- `rhymek` interaktif menüsünde **🔎 Anlamsal Şarkı Arama** seçeneği de bulunur.
 
 Python API:
 

@@ -91,6 +91,7 @@ def interactive_menu() -> None:
             choices=[
                 "🖥️  Tam Ekran TUI Dashboard'u Başlat (Textual)",
                 "📋 Kayıtlı Sanatçıları Listele",
+                "🔎 Anlamsal Şarkı Arama (Transformer)",
                 "🔍 Yeni Sanatçı Ara ve Ekle",
                 "⬇️  Şarkı Sözlerini İndir",
                 "🗑️  Sanatçı Sil",
@@ -116,6 +117,34 @@ def interactive_menu() -> None:
 
         elif "Listele" in choice:
             print_artists_table()
+
+        elif "Anlamsal" in choice:
+            query = questionary.text(
+                "Aramak istediğiniz anlam, duygu veya ifade:"
+            ).ask()
+            if not query or not query.strip():
+                continue
+            artist_filter = questionary.text(
+                "Sanatçı filtresi (boş bırakırsanız tümü):"
+            ).ask()
+
+            try:
+                cmd_nlp_search(
+                    query=query.strip(),
+                    top=10,
+                    artist=(
+                        artist_filter.strip()
+                        if artist_filter and artist_filter.strip()
+                        else None
+                    ),
+                    model=DEFAULT_MODEL,
+                    device="auto",
+                    snippet_chars=140,
+                    as_json=False,
+                )
+            except typer.Exit:
+                # Arama hatası interaktif menüyü kapatmasın.
+                pass
 
         elif "Yeni Sanatçı" in choice:
             query = questionary.text("Aramak istediğiniz sanatçı adı:").ask()
