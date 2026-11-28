@@ -1,18 +1,10 @@
-"""
-Kafiye analizi için altyapı ve genişletme noktaları.
+"""Satır sonlarında yazıma dayalı kafiye adayları."""
 
-Bu modül şu an yalnızca satır sonu adaylarını çıkarır. Fonetik kafiye
-anahtarı ve kafiye gruplama henüz uygulanmamıştır; ``rhyme_key`` ve
-``rhyme_groups`` fonksiyonları arayüz sözleşmesi olarak bırakılmıştır.
+from collections import defaultdict
+from typing import Dict, List, Union
 
-Uygulama fikirleri:
-- Türkçe sesli/sessiz yapısına göre fonetik normalizasyon
-- Son vurgulu hece ve sonrasının anahtar olarak alınması
-- Ekleri (çekim ekleri) soyma veya ses olaylarını (ünlü düşmesi vb.) eşleme
-"""
-
-from typing import Dict, List, Optional, Union
-
+from rhymek.nlp.syllables import is_vowel
+from rhymek.nlp.text import normalize_text
 from rhymek.nlp.types import SongDocument, Token
 
 LineEnding = Union[Token, str]
@@ -26,8 +18,7 @@ def line_endings(
     """
     Her satırın son token'ını döner.
 
-    Bunlar kafiye analizi için başlangıç adaylarıdır; gerçek kafiye tespiti
-    için :func:`rhyme_key` ile fonetik anahtara çevrilmeleri gerekir.
+    Bölüm başlıkları varsayılan olarak atlanır.
     """
     endings: List[Token] = []
     for line in document.lines:
@@ -44,17 +35,15 @@ def rhyme_key(
     min_suffix_length: int = 2,
     max_suffix_length: int = 4,
 ) -> str:
-    """
-    Bir kelime için fonetik kafiye anahtarı üretir.
-
-    .. note::
-        Henüz uygulanmadı. ``NotImplementedError`` yükseltir; ileride
-        Türkçe heceleme ve fonetik normalizasyon ile doldurulacaktır.
-    """
-    raise NotImplementedError(
-        "Fonetik kafiye anahtarı henüz uygulanmadı. "
-        "Türkçe heceleme/fonem dönüşümü eklendiğinde burası doldurulacak."
-    )
+    """Ünlü içeren normalize edilmiş bir sonek döner."""
+    if not 1 <= min_suffix_length <= max_suffix_length:
+        raise ValueError("Sonek uzunlukları 1 <= min <= max koşulunu sağlamalı")
+    text = token.normalized if isinstance(token, Token) else token
+    letters = "".join(char for char in normalize_text(text) if char.isalpha())
+    suffix = letters[-max_suffix_length:]
+    if len(suffix) < min_suffix_length or not any(map(is_vowel, suffix)):
+        return ""
+    return suffix
 
 
 def rhyme_groups(
@@ -62,21 +51,23 @@ def rhyme_groups(
     *,
     skip_section_headers: bool = True,
 ) -> Dict[str, List[Token]]:
-    """
-    Satır sonlarını kafiye anahtarına göre gruplar.
+    """En uzun ortak soneklerden başlayarak satır sonlarını gruplar."""
+    candidates: dict[str, list[int]] = defaultdict(list)
+    endings = line_endings(document, skip_section_headers=skip_section_headers)
+    for index, token in enumerate(endings):
+        suffix = rhyme_key(token)
+        for length in range(2, len(suffix) + 1):
+            key = suffix[-length:]
+            if any(map(is_vowel, key)):
+                candidates[key].append(index)
 
-    .. note::
-        Henüz uygulanmadı; :func:`rhyme_key` tamamlandığında etkinleşecek.
-    """
-    groups: Dict[str, List[Token]] = {}
-    for token in line_endings(
-        document,
-        skip_section_headers=skip_section_headers,
-    ):
-        key: Optional[str] = rhyme_key(token)
-        if key is None:
-            continue
-        groups.setdefault(key, []).append(token)
+    groups: dict[str, list[Token]] = {}
+    grouped: set[int] = set()
+    for key in sorted(candidates, key=len, reverse=True):
+        matches = [index for index in candidates[key] if index not in grouped]
+        if len(matches) >= 2:
+            groups[key] = [endings[index] for index in matches]
+            grouped.update(matches)
     return groups
 
 

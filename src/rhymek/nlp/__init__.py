@@ -5,11 +5,7 @@ Bu paket, Türkçe şarkı sözleri üzerinde çalışacak analizler için ortak
 veri modellerini, korpus yükleyicisini, metin ön işleme yardımcılarını ve
 analiz pipeline'ını sağlar.
 
-Kapsam bilinçli olarak "altyapı" ile sınırlıdır:
-- Çalışan: JSONL korpus yükleme, normalize etme, tokenize etme, kıta/satır
-  ayrıştırma, istatistik analizi, pipeline, transformer tabanlı gömme ve
-  anlamsal arama
-- İskelet: kafiye anahtarı ve Türkçe heceleme (``NotImplementedError``)
+Türkçe heceleme ve yazıma dayalı kafiye adayları da sağlar.
 """
 
 from rhymek.nlp.analyzers import Analyzer, StatsAnalyzer, summarize_corpus

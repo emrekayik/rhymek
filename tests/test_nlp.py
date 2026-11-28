@@ -8,6 +8,7 @@ from pathlib import Path
 from rhymek.nlp import (
     Pipeline,
     StatsAnalyzer,
+    count_syllables,
     count_vowels,
     document_from_record,
     is_vowel,
@@ -15,6 +16,7 @@ from rhymek.nlp import (
     load_corpus,
     normalize_text,
     parse_lyrics,
+    rhyme_groups,
     rhyme_key,
     summarize_corpus,
     syllabify,
@@ -66,9 +68,11 @@ class SyllableTests(unittest.TestCase):
         self.assertFalse(is_vowel("b"))
         self.assertEqual(count_vowels("Ceza'nın"), 3)
 
-    def test_syllabify_not_implemented(self):
-        with self.assertRaises(NotImplementedError):
-            syllabify("kafiye")
+    def test_syllabify(self):
+        self.assertEqual(syllabify("kafiye"), ["ka", "fi", "ye"])
+        self.assertEqual(syllabify("Türkçe"), ["Türk", "çe"])
+        self.assertEqual(count_syllables("Ceza’nın"), 3)
+        self.assertEqual(syllabify("123"), [])
 
 
 class RhymeTests(unittest.TestCase):
@@ -80,9 +84,14 @@ class RhymeTests(unittest.TestCase):
         endings = line_endings(document)
         self.assertEqual([token.normalized for token in endings], ["iki", "dört"])
 
-    def test_rhyme_key_not_implemented(self):
-        with self.assertRaises(NotImplementedError):
-            rhyme_key("kafiye")
+    def test_rhyme_groups_match_longest_shared_suffix(self):
+        doc = document_from_record({"lyrics": "Bir taş\nBir savaş\nBir göl"})
+        self.assertEqual(rhyme_key("SAVAŞ", max_suffix_length=3), "vaş")
+        self.assertEqual(rhyme_key("a"), "")
+        self.assertEqual(
+            {key: [token.text for token in tokens] for key, tokens in rhyme_groups(doc).items()},
+            {"aş": ["taş", "savaş"]},
+        )
 
 
 class CorpusTests(unittest.TestCase):

@@ -1,20 +1,11 @@
-"""
-Türkçe heceleme ve hece sayımı için altyapı.
+"""Türkçe yazıma dayalı heceleme yardımcıları."""
 
-Heceleme henüz uygulanmadı. Arayüz, ileride `turkishnlp` veya kendi
-kural tabanlı heceleyicinizle doldurulmak üzere tanımlanmıştır.
-
-Türkçe heceleme için dikkat edilmesi gerekenler:
-- Ünlü harfler hece çekirdeğidir: a, e, ı, i, o, ö, u, ü
-- Ünsüz kümeleri ve ünlü çevresindeki dağılım hece sınırını belirler
-- Kesme işaretli ekler (``Ceza'nın``) ayrı değerlendirilebilir
-"""
-
-from typing import List
+import re
+import unicodedata
 
 from rhymek.nlp.text import TURKISH_VOWELS, turkish_lower
 
-VOWELS = frozenset(TURKISH_VOWELS)
+VOWELS = frozenset(TURKISH_VOWELS + "âîû")
 
 
 def is_vowel(char: str) -> bool:
@@ -27,26 +18,24 @@ def count_vowels(text: str) -> int:
     return sum(1 for char in turkish_lower(text or "") if char in VOWELS)
 
 
-def syllabify(word: str) -> List[str]:
-    """
-    Kelimeyi hecelere ayırır.
-
-    .. note::
-        Henüz uygulanmadı; ``NotImplementedError`` yükseltir.
-    """
-    raise NotImplementedError(
-        "Türkçe heceleme henüz uygulanmadı. "
-        "'turkishnlp' entegrasyonu veya kural tabanlı bir heceleyici eklenecek."
-    )
+def syllabify(word: str) -> list[str]:
+    """Ünlü çekirdeklerine göre heceler ve özgün harf büyüklüğünü korur."""
+    syllables: list[str] = []
+    for part in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFC", word)):
+        nuclei = [index for index, char in enumerate(part) if is_vowel(char)]
+        if not nuclei:
+            continue
+        start = 0
+        for left, right in zip(nuclei, nuclei[1:]):
+            boundary = max(left + 1, right - 1)
+            syllables.append(part[start:boundary])
+            start = boundary
+        syllables.append(part[start:])
+    return syllables
 
 
 def count_syllables(word: str) -> int:
-    """
-    Kelimedeki hece sayısını döner.
-
-    .. note::
-        Henüz uygulanmadı; :func:`syllabify` tamamlandığında etkinleşecek.
-    """
+    """Kelimedeki hece sayısını döner."""
     return len(syllabify(word))
 
 
